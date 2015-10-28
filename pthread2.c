@@ -49,7 +49,7 @@ void* sum(void* no) {
     long t_no = (long) no;
     long t_range = term_count / thread_count;
     long t_start = t_no * t_range;
-    long t_end = (t_no+1) * t_range;
+    long t_end = (t_no == thread_count-1) ? term_count : (t_no+1) * t_range;
     long double t_pi = 0;
     long double t_numerator = (t_start % 2 == 0) ? 1.0 : -1.0;
     for (long i = t_start; i < t_end; ++i, t_numerator = -t_numerator)
