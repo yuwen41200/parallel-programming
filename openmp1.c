@@ -73,11 +73,12 @@ int main(int argc, char *argv[]) {
 			colidx[k] = colidx[k] - firstcol;
 	for (i = 0; i < NA+1; i++)
 		x[i] = 1.0;
-	for (j = 0; j < lastcol - firstcol + 1; j++)
+	for (j = 0; j < lastcol - firstcol + 1; j++) {
 		q[j] = 0.0;
 		z[j] = 0.0;
 		r[j] = 0.0;
 		p[j] = 0.0;
+	}
 	zeta = 0.0;
 	for (it = 1; it <= 1; it++) {
 		conj_grad(colidx, rowstr, x, z, a, p, q, r, &rnorm);
@@ -99,9 +100,11 @@ int main(int argc, char *argv[]) {
 
 	timer_start(T_bench);
 	for (it = 1; it <= NITER; it++) {
-		if (timeron) timer_start(T_conj_grad);
+		if (timeron)
+			timer_start(T_conj_grad);
 		conj_grad(colidx, rowstr, x, z, a, p, q, r, &rnorm);
-		if (timeron) timer_stop(T_conj_grad);
+		if (timeron)
+			timer_stop(T_conj_grad);
 		norm_temp1 = 0.0;
 		norm_temp2 = 0.0;
 		for (j = 0; j < lastcol - firstcol + 1; j++) {
@@ -110,12 +113,11 @@ int main(int argc, char *argv[]) {
 		}
 		norm_temp2 = 1.0 / sqrt(norm_temp2);
 		zeta = SHIFT + 1.0 / norm_temp1;
-		if (it == 1) 
+		if (it == 1)
 			printf("\n   iteration           ||r||                 zeta\n");
 		printf("    %5d       %20.14E%20.13f\n", it, rnorm, zeta);
-		for (j = 0; j < lastcol - firstcol + 1; j++) {
+		for (j = 0; j < lastcol - firstcol + 1; j++)
 			x[j] = norm_temp2 * z[j];
-		}
 	}
 	timer_stop(T_bench);
 	t = timer_read(T_bench);
@@ -159,12 +161,15 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		/************************************************* parallel part begins *************************************************/
 #pragma omp parallel
 {
-#pragma omp for reduction(+:d)
+#pragma omp for
 		for (j = 0; j < lastrow - firstrow + 1; j++) {
 			sum = 0.0;
 			for (k = rowstr[j]; k < rowstr[j + 1]; k++)
 				sum = sum + a[k] * p[colidx[k]];
 			q[j] = sum;
+		}
+#pragma omp for reduction(+:d)
+		for (j = 0; j < lastcol - firstcol + 1; j++) {
 			d = d + p[j] * q[j];
 		}
 #pragma omp single
@@ -184,8 +189,8 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		/************************************************* end of parallel part *************************************************/
 	}
 	sum = 0.0;
-	d = 0.0;
 	for (j = 0; j < lastrow - firstrow + 1; j++) {
+		d = 0.0;
 		for (k = rowstr[j]; k < rowstr[j+1]; k++)
 			d = d + a[k] * z[colidx[k]];
 		r[j] = d;
