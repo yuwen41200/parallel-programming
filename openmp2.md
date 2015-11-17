@@ -24,4 +24,4 @@ Data Size: M
 | 5 | rev1.0 | 0.577         | 1.223876      | 1.36    |
 | 6 | rev1.0 | 0.564         | 1.194111      | 1.39    |
 
-*Question: Most of the time I will get extremely slow results. Why?*
+**Question: Most of the time I will get extremely slow results. Why?**
