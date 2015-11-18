@@ -1,5 +1,7 @@
 ## Test Results for openmp1.c ##
 
+On the workstations of NCTU CSCC, using up to 4 threads.
+
 Data Size: L
 
 | # | rev.   | Init Time (s) | Exec Time (s) | Speedup |
@@ -25,3 +27,4 @@ Data Size: M
 | 6 | rev1.0 | 0.564         | 1.194111      | 1.39    |
 
 **Question: Most of the time I will get extremely slow results. Why?**
+Solution: Resolve the false sharing issue.

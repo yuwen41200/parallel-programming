@@ -1,7 +1,7 @@
 /**
  * This program was originally written in serial method by the teacher.
  * Please refer to openmp2.md for test results.
- * revison: rev1.1
+ * revison: rev1.2
  */
 
 #include <stdio.h>
@@ -162,19 +162,19 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		/************************************************* parallel part begins *************************************************/
 #pragma omp parallel
 {
-#pragma omp for private(sum)
+#pragma omp for private(sum) schedule(static, 20480)
 		for (j = 0; j < lastrow - firstrow + 1; j++) {
 			sum = 0.0;
 			for (k = rowstr[j]; k < rowstr[j + 1]; k++)
 				sum = sum + a[k] * p[colidx[k]];
 			q[j] = sum;
 		}
-#pragma omp for reduction(+:d)
+#pragma omp for reduction(+:d) schedule(static, 20480)
 		for (j = 0; j < lastcol - firstcol + 1; j++)
 			d = d + p[j] * q[j];
 #pragma omp single
 		alpha = rho0 / d;
-#pragma omp for reduction(+:rho)
+#pragma omp for reduction(+:rho) schedule(static, 20480)
 		for (j = 0; j < lastcol - firstcol + 1; j++) {
 			z[j] = z[j] + alpha * p[j];
 			r[j] = r[j] - alpha * q[j];
@@ -182,7 +182,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		}
 #pragma omp single
 		beta = rho / rho0;
-#pragma omp for
+#pragma omp for schedule(static, 20480)
 		for (j = 0; j < lastcol - firstcol + 1; j++)
 			p[j] = r[j] + beta * p[j];
 }
