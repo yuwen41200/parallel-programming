@@ -1,7 +1,7 @@
 /**
  * This program was originally written in serial method by the teacher.
  * Please refer to openmp2.md for test results.
- * revision: rev2.1
+ * revision: rev2.2
  */
 
 #include <stdio.h>
@@ -46,11 +46,11 @@ static double amult;
 static double tran;
 static logical timeron;
 static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double a[], double p[], double q[], double r[], double *rnorm);
-static void makea(int n, int nz, double a[], int colidx[], int rowstr[], int firstrow, int lastrow, int firstcol, int lastcol, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int iv[]);
-static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int nozer, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int firstrow, int lastrow, int nzloc[], double rcond, double shift);
+static void makea(int n, int nz, double a[], int colidx[], int rowstr[], int firstrow, int lastrow, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int iv[]);
+static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int firstrow, int lastrow, int nzloc[], double rcond, double shift);
 static void sprnvc(int n, int nz, int nn1, double v[], int iv[]);
 static int icnvrt(double x, int ipwr2);
-static void vecset(int n, double v[], int iv[], int *nzv, int i, double val);
+static void vecset(double v[], int iv[], int *nzv, int i, double val);
 
 int main() {
 	omp_set_num_threads(4);
@@ -77,8 +77,8 @@ int main() {
 	nzz = NZ;
 	tran = 314159265.0;
 	amult = 1220703125.0;
-	zeta = randlc(&tran, amult);
-	makea(naa, nzz, a, colidx, rowstr, firstrow, lastrow, firstcol, lastcol, arow, (int (*)[NONZER+1])(void*)acol, (double (*)[NONZER+1])(void*)aelt, iv);
+	randlc(&tran, amult);
+	makea(naa, nzz, a, colidx, rowstr, firstrow, lastrow, arow, (int (*)[NONZER+1])(void*)acol, (double (*)[NONZER+1])(void*)aelt, iv);
 	for (j = 0; j < lastrow - firstrow + 1; j++)
 		for (k = rowstr[j]; k < rowstr[j+1]; k++)
 			colidx[k] = colidx[k] - firstcol;
@@ -90,7 +90,6 @@ int main() {
 		r[j] = 0.0;
 		p[j] = 0.0;
 	}
-	zeta = 0.0;
 	for (it = 1; it <= 1; it++) {
 		conj_grad(colidx, rowstr, x, z, a, p, q, r, &rnorm);
 		norm_temp1 = 0.0;
@@ -224,7 +223,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 	*rnorm = sqrt(sum);
 }
 
-static void makea(int n, int nz, double a[], int colidx[], int rowstr[], int firstrow, int lastrow, int firstcol, int lastcol, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int iv[]) {
+static void makea(int n, int nz, double a[], int colidx[], int rowstr[], int firstrow, int lastrow, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int iv[]) {
 	int iouter, ivelt, nzv, nn1;
 	int ivc[NONZER+1];
 	double vc[NONZER+1];
@@ -235,17 +234,17 @@ static void makea(int n, int nz, double a[], int colidx[], int rowstr[], int fir
 	for (iouter = 0; iouter < n; iouter++) {
 		nzv = NONZER;
 		sprnvc(n, nzv, nn1, vc, ivc);
-		vecset(n, vc, ivc, &nzv, iouter+1, 0.5);
+		vecset(vc, ivc, &nzv, iouter+1, 0.5);
 		arow[iouter] = nzv;
 		for (ivelt = 0; ivelt < nzv; ivelt++) {
 			acol[iouter][ivelt] = ivc[ivelt] - 1;
 			aelt[iouter][ivelt] = vc[ivelt];
 		}
 	}
-	sparse(a, colidx, rowstr, n, nz, NONZER, arow, acol, aelt, firstrow, lastrow, iv, RCOND, SHIFT);
+	sparse(a, colidx, rowstr, n, nz, arow, acol, aelt, firstrow, lastrow, iv, RCOND, SHIFT);
 }
 
-static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int nozer, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int firstrow, int lastrow, int nzloc[], double rcond, double shift) {
+static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int arow[], int acol[][NONZER+1], double aelt[][NONZER+1], int firstrow, int lastrow, int nzloc[], double rcond, double shift) {
 	int nrows;
 	int i, j, j1, j2, nza, k, kk, nzrow, jcol;
 	double size, scale, ratio, va;
@@ -257,14 +256,13 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 #pragma omp parallel for schedule(static, PAR_SIZE)
 	for (j = 0; j < nrows + 1; j++)
 		rowstr[j] = 0;
-//#pragma omp parallel for private(j) schedule(static, PAR_SIZE)
+/************************************************** parallel part ends **************************************************/
 	for (i = 0; i < n; i++) {
 		for (nza = 0; nza < arow[i]; nza++) {
 			j = acol[i][nza] + 1;
 			rowstr[j] = rowstr[j] + arow[i];
 		}
 	}
-/************************************************** parallel part ends **************************************************/
 	rowstr[0] = 0;
 	for (j = 1; j < nrows + 1; j++)
 		rowstr[j] = rowstr[j] + rowstr[j-1];
@@ -274,8 +272,6 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 		printf("nza, nzmax = %d, %d\n", nza, nz);
 		exit(EXIT_FAILURE);
 	}
-/************************************************* parallel part begins *************************************************/
-//#pragma omp parallel for schedule(static, PAR_SIZE)
 	for (j = 0; j < nrows; j++) {
 		for (k = rowstr[j]; k < rowstr[j+1]; k++) {
 			a[k] = 0.0;
@@ -283,7 +279,6 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 		}
 		nzloc[j] = 0;
 	}
-/************************************************** parallel part ends **************************************************/
 	for (i = 0; i < n; i++) {
 		for (nza = 0; nza < arow[i]; nza++) {
 			j = acol[i][nza];
@@ -347,7 +342,6 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 	for (j = 1; j < nrows + 1; j++)
 		rowstr[j] = rowstr[j] - nzloc[j-1];
 /************************************************** parallel part ends **************************************************/
-	nza = rowstr[nrows] - 1;
 }
 
 static void sprnvc(int n, int nz, int nn1, double v[], int iv[]) {
@@ -379,7 +373,7 @@ static int icnvrt(double x, int ipwr2) {
 	return (int)(ipwr2 * x);
 }
 
-static void vecset(int n, double v[], int iv[], int *nzv, int i, double val) {
+static void vecset(double v[], int iv[], int *nzv, int i, double val) {
 	int k;
 	logical set;
 	set = false;
