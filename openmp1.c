@@ -1,7 +1,7 @@
 /**
  * This program was originally written in serial method by the teacher.
  * Please refer to openmp2.md for test results.
- * revision: rev1.3
+ * revision: rev2.0
  */
 
 #include <stdio.h>
@@ -201,16 +201,23 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 /************************************************* end of parallel part *************************************************/
 	}
 	sum = 0.0;
+/************************************************* parallel part begins *************************************************/
+#pragma omp parallel
+{
+#pragma omp for private(d) schedule(static, PAR_SIZE)
 	for (j = 0; j < lastrow - firstrow + 1; j++) {
 		d = 0.0;
-		for (k = rowstr[j]; k < rowstr[j+1]; k++)
+		for (k = rowstr[j]; k < rowstr[j + 1]; k++)
 			d = d + a[k] * z[colidx[k]];
 		r[j] = d;
 	}
+#pragma omp for private(d) reduction(+:sum) schedule(static, PAR_SIZE)
 	for (j = 0; j < lastcol - firstcol + 1; j++) {
 		d = x[j] - r[j];
 		sum = sum + d * d;
 	}
+}
+/************************************************* end of parallel part *************************************************/
 	*rnorm = sqrt(sum);
 }
 
