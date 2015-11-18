@@ -1,7 +1,7 @@
 /**
  * This program was originally written in serial method by the teacher.
  * Please refer to openmp2.md for test results.
- * revision: rev2.0
+ * revision: rev2.1
  */
 
 #include <stdio.h>
@@ -22,7 +22,7 @@
 #ifdef LARGE
 #define PAR_SIZE 20480
 #endif
-/************************************************* end of parallel part *************************************************/
+/************************************************** parallel part ends **************************************************/
 
 static int colidx[NZ];
 static int rowstr[NA+1];
@@ -52,16 +52,14 @@ static void sprnvc(int n, int nz, int nn1, double v[], int iv[]);
 static int icnvrt(double x, int ipwr2);
 static void vecset(int n, double v[], int iv[], int *nzv, int i, double val);
 
-int main(int argc, char *argv[]) {
+int main() {
 	omp_set_num_threads(4);
 	int i, j, k, it;
 	double zeta;
 	double rnorm;
 	double norm_temp1, norm_temp2;
-	double t, mflops, tmax;
-	logical verified;
+	double t;
 	double zeta_verify_value, epsilon, err;
-	char *t_names[T_last];
 	for (i = 0; i < T_last; i++)
 		timer_clear(i);
 
@@ -139,13 +137,11 @@ int main(int argc, char *argv[]) {
 	epsilon = 1.0e-10;
 	err = fabs(zeta - zeta_verify_value) / zeta_verify_value;
 	if (err <= epsilon) {
-		verified = true;
 		printf(" VERIFICATION SUCCESSFUL\n");
 		printf(" Zeta is    %20.13E\n", zeta);
 		printf(" Error is   %20.13E\n", err);
 	}
 	else {
-		verified = false;
 		printf(" VERIFICATION FAILED\n");
 		printf(" Zeta                %20.13E\n", zeta);
 		printf(" The correct zeta is %20.13E\n", zeta_verify_value);
@@ -159,14 +155,21 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 	int cgit, cgitmax = 25;
 	double d, sum, rho, rho0, alpha, beta;
 	rho = 0.0;
+/************************************************* parallel part begins *************************************************/
+#pragma omp parallel
+{
+#pragma omp for schedule(static, PAR_SIZE)
 	for (j = 0; j < naa + 1; j++) {
 		q[j] = 0.0;
 		z[j] = 0.0;
 		r[j] = x[j];
 		p[j] = r[j];
 	}
+#pragma omp for reduction(+:rho) schedule(static, PAR_SIZE)
 	for (j = 0; j < lastcol - firstcol + 1; j++)
 		rho = rho + r[j] * r[j];
+}
+/************************************************** parallel part ends **************************************************/
 	for (cgit = 1; cgit <= cgitmax; cgit++) {
 		d = 0.0;
 		rho0 = rho;
@@ -177,7 +180,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 #pragma omp for private(sum) schedule(static, PAR_SIZE)
 		for (j = 0; j < lastrow - firstrow + 1; j++) {
 			sum = 0.0;
-			for (k = rowstr[j]; k < rowstr[j + 1]; k++)
+			for (k = rowstr[j]; k < rowstr[j+1]; k++)
 				sum = sum + a[k] * p[colidx[k]];
 			q[j] = sum;
 		}
@@ -198,7 +201,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		for (j = 0; j < lastcol - firstcol + 1; j++)
 			p[j] = r[j] + beta * p[j];
 }
-/************************************************* end of parallel part *************************************************/
+/************************************************** parallel part ends **************************************************/
 	}
 	sum = 0.0;
 /************************************************* parallel part begins *************************************************/
@@ -207,7 +210,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 #pragma omp for private(d) schedule(static, PAR_SIZE)
 	for (j = 0; j < lastrow - firstrow + 1; j++) {
 		d = 0.0;
-		for (k = rowstr[j]; k < rowstr[j + 1]; k++)
+		for (k = rowstr[j]; k < rowstr[j+1]; k++)
 			d = d + a[k] * z[colidx[k]];
 		r[j] = d;
 	}
@@ -217,7 +220,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		sum = sum + d * d;
 	}
 }
-/************************************************* end of parallel part *************************************************/
+/************************************************** parallel part ends **************************************************/
 	*rnorm = sqrt(sum);
 }
 
@@ -248,14 +251,20 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 	double size, scale, ratio, va;
 	logical cont40;
 	nrows = lastrow - firstrow + 1;
+	size = 1.0;
+	ratio = pow(rcond, (1.0 / (double) (n)));
+/************************************************* parallel part begins *************************************************/
+#pragma omp parallel for schedule(static, PAR_SIZE)
 	for (j = 0; j < nrows + 1; j++)
 		rowstr[j] = 0;
+//#pragma omp parallel for private(j) schedule(static, PAR_SIZE)
 	for (i = 0; i < n; i++) {
 		for (nza = 0; nza < arow[i]; nza++) {
 			j = acol[i][nza] + 1;
 			rowstr[j] = rowstr[j] + arow[i];
 		}
 	}
+/************************************************** parallel part ends **************************************************/
 	rowstr[0] = 0;
 	for (j = 1; j < nrows + 1; j++)
 		rowstr[j] = rowstr[j] + rowstr[j-1];
@@ -265,6 +274,8 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 		printf("nza, nzmax = %d, %d\n", nza, nz);
 		exit(EXIT_FAILURE);
 	}
+/************************************************* parallel part begins *************************************************/
+//#pragma omp parallel for schedule(static, PAR_SIZE)
 	for (j = 0; j < nrows; j++) {
 		for (k = rowstr[j]; k < rowstr[j+1]; k++) {
 			a[k] = 0.0;
@@ -272,8 +283,7 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 		}
 		nzloc[j] = 0;
 	}
-	size = 1.0;
-	ratio = pow(rcond, (1.0 / (double)(n)));
+/************************************************** parallel part ends **************************************************/
 	for (i = 0; i < n; i++) {
 		for (nza = 0; nza < arow[i]; nza++) {
 			j = acol[i][nza];
@@ -286,14 +296,14 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 				cont40 = false;
 				for (k = rowstr[j]; k < rowstr[j+1]; k++) {
 					if (colidx[k] > jcol) {
-						for (kk = rowstr[j+1]-2; kk >= k; kk--) {
+						for (kk = rowstr[j+1] - 2; kk >= k; kk--) {
 							if (colidx[kk] > -1) {
-								a[kk+1]  = a[kk];
+								a[kk+1] = a[kk];
 								colidx[kk+1] = colidx[kk];
 							}
 						}
 						colidx[k] = jcol;
-						a[k]  = 0.0;
+						a[k] = 0.0;
 						cont40 = true;
 						break;
 					}
@@ -332,8 +342,11 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz, int no
 			nza = nza + 1;
 		}
 	}
-	for (j = 1; j < nrows+1; j++)
+/************************************************* parallel part begins *************************************************/
+#pragma omp parallel for schedule(static, PAR_SIZE)
+	for (j = 1; j < nrows + 1; j++)
 		rowstr[j] = rowstr[j] - nzloc[j-1];
+/************************************************** parallel part ends **************************************************/
 	nza = rowstr[nrows] - 1;
 }
 
