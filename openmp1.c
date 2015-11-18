@@ -171,7 +171,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		d = 0.0;
 		rho0 = rho;
 		rho = 0.0;
-		/************************************************* parallel part begins *************************************************/
+/************************************************* parallel part begins *************************************************/
 #pragma omp parallel
 {
 #pragma omp for private(sum) schedule(static, PAR_SIZE)
@@ -198,7 +198,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[], double
 		for (j = 0; j < lastcol - firstcol + 1; j++)
 			p[j] = r[j] + beta * p[j];
 }
-		/************************************************* end of parallel part *************************************************/
+/************************************************* end of parallel part *************************************************/
 	}
 	sum = 0.0;
 	for (j = 0; j < lastrow - firstrow + 1; j++) {
