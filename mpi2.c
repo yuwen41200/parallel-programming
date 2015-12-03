@@ -15,6 +15,7 @@ int main(int argc, char *argv[]) {
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
+
 	if (rank != 0) {
 		sprintf(msg, "process %d", rank);
 		MPI_Send(msg, strlen(msg) + 1, MPI_CHAR, /*dest*/ 0, /*tag*/ 0, MPI_COMM_WORLD);
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
 		}
 		printf("process %d\n", rank);
 	}
-	MPI_Finalize();
 
+	MPI_Finalize();
 	return 0;
 }
