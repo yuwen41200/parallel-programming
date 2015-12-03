@@ -1,5 +1,5 @@
 /**
- * Compile: mpicc -o mpi1 mpi2.c
+ * Compile: mpicc -o mpi2 mpi2.c
  * Execute: mpiexec -n 8 mpi2
  */
 
