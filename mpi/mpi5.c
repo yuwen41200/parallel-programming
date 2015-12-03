@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
 	if (rank == 0) {
 		sscanf(argv[1], "%llu", &limit);
-		printf("Starting. Numbers to be scanned= %lld\n", limit);
+		printf("Starting. Numbers to be scanned = %lld.\n", limit);
 	}
 
 	MPI_Bcast(limit, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	MPI_Reduce(&new_found_par, &new_found, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
 
 	if (rank == 0)
-		printf("Done. Largest prime is %d Total primes %d\n", new_found, prime_count + 4);
+		printf("Done. Largest prime is %d. Total primes %d.\n", new_found, prime_count + 4);
 
 	MPI_Finalize();
 	return 0;

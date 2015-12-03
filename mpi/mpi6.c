@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	MPI_Reduce(&sum_par, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	if (rank == 0)
-		printf("The total area is: %f\n", (float) (sum * width));
+		printf("The total area is: %f.\n", (float) (sum * width));
 
 	MPI_Finalize();
 	return 0;
