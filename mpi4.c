@@ -1,10 +1,9 @@
 /**
- * Distributed-Memory Programming with MPI #4
+ * Distributed-Memory Programming with MPI #5
  * Assignment: prime.c
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 #include "mpi.h"
 
@@ -33,14 +32,22 @@ int main(int argc, char *argv[]) {
 
 	MPI_Bcast(limit, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
-	part = limit / size;
+	part = (limit - 11) / size;
 	start = 11 + rank * part;
 	end = (rank != size - 1) ? (start + part) : limit;
+	start = (start % 2) ? start : (start + 1);
 
 	for (long long n = start; n < end; n += 2) {
 		if (isprime(n)) {
 			prime_count_par++;
 			new_found_par = n;
+		}
+	}
+
+	if ((rank == 0) && (start % 2)) {
+		if (isprime(limit)) {
+			prime_count_par++;
+			new_found_par = limit;
 		}
 	}
 

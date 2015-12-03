@@ -1,5 +1,5 @@
 /**
- * Distributed-Memory Programming with MPI #5
+ * Distributed-Memory Programming with MPI #4
  * Derived Datatypes
  */
 
