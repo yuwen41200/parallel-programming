@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 		printf("Starting. Numbers to be scanned = %lld.\n", limit);
 	}
 
-	MPI_Bcast(limit, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&limit, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
 	part = (limit - 11) / size;
 	start = 11 + rank * part;
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if ((rank == 0) && (start % 2)) {
+	if ((rank == 0) && (limit % 2)) {
 		if (isprime(limit)) {
 			prime_count_par++;
 			new_found_par = limit;

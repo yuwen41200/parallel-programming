@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 	if (rank == 0)
 		sscanf(argv[1], "%llu", &num);
 
-	MPI_Bcast(num, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&num, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
 	part = num / size;
 	start = rank * part;
