@@ -1,10 +1,11 @@
 /**
  * Distributed-Memory Programming with MPI #2
  * Compile: mpicc -o mpi2 mpi2.c
- * Execute: mpirun -n 8 mpi2
+ * Execute: mpirun -n 8 ./mpi2
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "mpi.h"
 
 int main(int argc, char *argv[]) {

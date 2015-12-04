@@ -1,7 +1,7 @@
 /**
  * Distributed-Memory Programming with MPI #1
  * Compile: mpicc -o mpi1 mpi1.c
- * Execute: mpirun -n 8 mpi1
+ * Execute: mpirun -n 8 ./mpi1
  */
 
 #include <stdio.h>
