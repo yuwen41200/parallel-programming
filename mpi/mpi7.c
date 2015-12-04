@@ -11,7 +11,7 @@ double MPI_Wtime();
 
 // non-blocking point-to-point communication
 int MPI_Irecv(void *message, int count, MPI_Datatype type,
-              int source, int tag, MPI_Comm communicator, MPI_Request *request);
+              int src, int tag, MPI_Comm communicator, MPI_Request *request);
 
 int MPI_Isend(void *message, int count, MPI_Datatype type,
               int dest, int tag, MPI_Comm communicator, MPI_Request *request);
