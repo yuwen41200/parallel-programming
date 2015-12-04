@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
 
 	MPI_Bcast(&num, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
-	part = num / size;
-	start = rank * part;
+	part = (num - 1) / size;
+	start = 1 + rank * part;
 	end = (rank != size - 1) ? (start + part) : num;
 	width = PI / num;
 
