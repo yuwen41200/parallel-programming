@@ -3,9 +3,9 @@
  * Derived Datatypes
  */
 
-MPI_Datatype new_type;
-MPI_Type_commit(&new_type);
-MPI_Type_free(&new_type);
+int MPI_Type_commit(MPI_Datatype *new_type);
+
+int MPI_Type_free(MPI_Datatype *new_type);
 
 int MPI_Type_contiguous(int count, MPI_Datatype old_type, MPI_Datatype *new_type);
 

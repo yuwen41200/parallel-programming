@@ -32,3 +32,6 @@ int main(int argc, char *argv[]) {
 	MPI_Finalize();
 	return 0;
 }
+
+// Alternative to Line 26:
+// MPI_Recv(msg, 100, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
