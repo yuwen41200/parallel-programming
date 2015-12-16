@@ -100,7 +100,7 @@ __global__ void initLine(float *devPrevVal, float *devCurrVal, int totalPoints) 
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < totalPoints) {
 		float x = i / (totalPoints - 1);
-		devPrevVal[i] = devCurrVal[i] = __sin(2.0 * PI * x);
+		devPrevVal[i] = devCurrVal[i] = __sinf(2.0 * PI * x);
 	}
 }
 
