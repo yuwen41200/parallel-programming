@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <time.h>
 
 #define MAXPOINTS 1000000
@@ -13,31 +12,68 @@
 #define MINPOINTS 20
 #define PI        3.14159265
 
+static void handleError(cudaError_t err, const char *file, int line) {
+	if (err != cudaSuccess) {
+		printf("%s in %s at line %d\n", cudaGetErrorString(err), file, line);
+		exit(EXIT_FAILURE);
+	}
+}
+#define HANDLE_ERROR(err) (handleError(err, __FILE__, __LINE__))
+
 void checkParam();
-void initLine();
-void magic(int);
-void updateAll();
+__global__ void initLine(float*, float*, int);
+__global__ void updateAll(float*, float*, float*, int);
 void printResult();
 
-int totalSteps, totalPoints;
-float currVal[MAXPOINTS+2], prevVal[MAXPOINTS+2], nextVal[MAXPOINTS+2];
+int totalSteps, totalPoints, allocPoints;
+float currVal;
+float *devCurrVal, *devPrevVal, *devNextVal;
 
 int main(int argc, char *argv[]) {
 	sscanf(argv[1], "%d", &totalPoints);
 	sscanf(argv[2], "%d", &totalSteps);
 	checkParam();
-	//printf("%ld\n", clock());
+
+	allocPoints = totalPoints + 256;
+
+	currVal = (float*) malloc(allocPoints * sizeof(float));
+	if (!currVal)
+		exit(EXIT_FAILURE);
+
+	HANDLE_ERROR(cudaMalloc((void**) &devCurrVal, allocPoints * sizeof(float)));
+	HANDLE_ERROR(cudaMalloc((void**) &devPrevVal, allocPoints * sizeof(float)));
+	HANDLE_ERROR(cudaMalloc((void**) &devNextVal, allocPoints * sizeof(float)));
+
+	dim3 threadsPerBlock(256);
+	dim3 numOfBlocks(allocPoints/256);
+
+	printf("%ld\n", clock());
 	printf("Initializing points on the line...\n");
-	initLine();
-	//printf("%ld\n", clock());
+
+	initLine<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, totalPoints);
+
+	printf("%ld\n", clock());
 	printf("Updating all points for all time steps...\n");
-	updateAll();
-	//printf("%ld\n", clock());
+
+	for (int i = 1; i<= totalSteps; i++)
+		updateAll<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, devNextVal, totalPoints);
+
+	printf("%ld\n", clock());
 	printf("Printing final results...\n");
+
+	HANDLE_ERROR(cudaMemcpy(currVal, devCurrVal, allocPoints * sizeof(float), cudaMemcpyDeviceToHost));
 	printResult();
-	//printf("%ld\n", clock());
+
+	printf("%ld\n", clock());
 	printf("\nDone.\n\n");
-	return 0;
+
+	cudaFree(devCurrVal);
+	cudaFree(devPrevVal);
+	cudaFree(devNextVal);
+
+	free(currVal);
+
+	return EXIT_SUCCESS;
 }
 
 void checkParam() {
@@ -59,46 +95,32 @@ void checkParam() {
 	printf("Using points = %d, steps = %d\n", totalPoints, totalSteps);
 }
 
-void initLine() {
-	float x, fac, k, temp;
-	fac = 2.0 * PI;
-	k = 0.0;
-	temp = totalPoints - 1;
-	for (int i = 1; i <= totalPoints; i++) {
-		x = k / temp;
-		prevVal[i] = currVal[i] = sin(fac * x);
-		k += 1.0;
+__global__ void initLine(float *devPrevVal, float *devCurrVal, int totalPoints) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < totalPoints) {
+		float x = i / (totalPoints - 1);
+		devPrevVal[i] = devCurrVal[i] = __sin(2.0 * PI * x);
 	}
 }
 
-// My calculus is poor. I don't know what it means, but it works.
-void magic(int i) {
-	float dtime, c, dx, tau, sqtau;
-	dtime = 0.3;
-	c = 1.0;
-	dx = 1.0;
-	tau = (c * dtime / dx);
-	sqtau = tau * tau;
-	nextVal[i] = (2.0 * currVal[i]) - prevVal[i] + (sqtau * (-2.0) * currVal[i]);
-}
-
-void updateAll() {
-	for (int i = 1; i<= totalSteps; i++) {
-		for (int j = 1; j <= totalPoints; j++) {
-			if ((j == 1) || (j == totalPoints))
-				nextVal[j] = 0.0;
-			else
-				magic(j);
-			prevVal[j] = currVal[j];
-			currVal[j] = nextVal[j];
-		}
+__global__ void updateAll(float *devPrevVal, float *devCurrVal, float *devNextVal, int totalPoints) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < totalPoints) {
+		if ((i == 0) || (i == totalPoints - 1))
+			devNextVal[i] = 0.0;
+		else
+			devNextVal[i] = 2.0 * devCurrVal[i] - devPrevVal[i] + 0.09 * (-2.0) * devCurrVal[i];
+		__syncthreads();
+		devPrevVal[i] = devCurrVal[i];
+		__syncthreads();
+		devCurrVal[i] = devNextVal[i];
 	}
 }
 
 void printResult() {
-	for (int i = 1; i <= totalPoints; i++) {
+	for (int i = 0; i < totalPoints; i++) {
 		printf("%6.4f ", currVal[i]);
-		if (i % 10 == 0)
+		if ((i + 1) % 10 == 0)
 			printf("\n");
 	}
 }
