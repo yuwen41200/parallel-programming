@@ -1,5 +1,6 @@
 /**
  * Concurrent Wave Equation
+ * Compilation Command: nvcc cuda1.cu -o cuda1
  * This program was originally written in serial method by the teacher.
  */
 
@@ -26,7 +27,7 @@ __global__ void updateAll(float*, float*, float*, int);
 void printResult();
 
 int totalSteps, totalPoints, allocPoints;
-float currVal;
+float *currVal;
 float *devCurrVal, *devPrevVal, *devNextVal;
 
 int main(int argc, char *argv[]) {
