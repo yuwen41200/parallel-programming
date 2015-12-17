@@ -47,27 +47,16 @@ int main(int argc, char *argv[]) {
 	dim3 threadsPerBlock(256);
 	dim3 numOfBlocks(allocPoints/256);
 
-	printf("%ld\n", clock());
 	printf("Initializing points on the line...\n");
-
 	initLine<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, totalPoints);
 
-	HANDLE_ERROR(cudaMemcpy(currVal, devCurrVal, allocPoints * sizeof(float), cudaMemcpyDeviceToHost));
-	printResult();
-
-	printf("%ld\n", clock());
 	printf("Updating all points for all time steps...\n");
+	updateAll<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, devNextVal, totalPoints);
 
-	for (int i = 1; i<= totalSteps; i++)
-		updateAll<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, devNextVal, totalPoints);
-
-	printf("%ld\n", clock());
 	printf("Printing final results...\n");
-
 	HANDLE_ERROR(cudaMemcpy(currVal, devCurrVal, allocPoints * sizeof(float), cudaMemcpyDeviceToHost));
 	printResult();
 
-	printf("%ld\n", clock());
 	printf("\nDone.\n\n");
 
 	cudaFree(devCurrVal);
@@ -109,14 +98,14 @@ __global__ void initLine(float *__devPrevVal, float *__devCurrVal, int __totalPo
 __global__ void updateAll(float *__devPrevVal, float *__devCurrVal, float *__devNextVal, int __totalPoints) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < __totalPoints) {
-		if ((i == 0) || (i == __totalPoints - 1))
-			__devNextVal[i] = 0.0;
-		else
-			__devNextVal[i] = 2.0 * __devCurrVal[i] - __devPrevVal[i] + 0.09 * (-2.0) * __devCurrVal[i];
-		__syncthreads();
-		__devPrevVal[i] = __devCurrVal[i];
-		__syncthreads();
-		__devCurrVal[i] = __devNextVal[i];
+		for (int i = 0; i < totalSteps; i++) {
+			if ((i == 0) || (i == __totalPoints - 1))
+				__devNextVal[i] = 0.0;
+			else
+				__devNextVal[i] = 1.82 * __devCurrVal[i] - __devPrevVal[i];
+			__devPrevVal[i] = __devCurrVal[i];
+			__devCurrVal[i] = __devNextVal[i];
+		}
 	}
 }
 
