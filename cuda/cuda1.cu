@@ -99,7 +99,7 @@ __global__ void updateAll(float *__devPrevVal, float *__devCurrVal, float *__dev
                           int __totalPoints, int __totalSteps) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < __totalPoints) {
-		for (int i = 0; i < __totalSteps; i++) {
+		for (int j = 0; j < __totalSteps; j++) {
 			if ((i == 0) || (i == __totalPoints - 1))
 				__devNextVal[i] = 0.0;
 			else
