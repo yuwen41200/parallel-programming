@@ -22,7 +22,7 @@ static void handleError(cudaError_t err, const char *file, int line) {
 #define HANDLE_ERROR(err) (handleError(err, __FILE__, __LINE__))
 
 void checkParam();
-__global__ void initLine(float*, float*, int);
+__global__ void initLine();
 __global__ void updateAll(float*, float*, float*, int);
 void printResult();
 
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 	printf("%ld\n", clock());
 	printf("Initializing points on the line...\n");
 
-	initLine<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, totalPoints);
+	initLine<<<numOfBlocks, threadsPerBlock>>>();
 
 	HANDLE_ERROR(cudaMemcpy(currVal, devCurrVal, allocPoints * sizeof(float), cudaMemcpyDeviceToHost));
 	printResult();
@@ -99,7 +99,7 @@ void checkParam() {
 	printf("Using points = %d, steps = %d\n", totalPoints, totalSteps);
 }
 
-__global__ void initLine(float *devPrevVal, float *devCurrVal, int totalPoints) {
+__global__ void initLine() {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < totalPoints) {
 		float x = i / (totalPoints - 1);
