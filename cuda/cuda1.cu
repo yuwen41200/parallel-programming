@@ -22,7 +22,7 @@ static void handleError(cudaError_t err, const char *file, int line) {
 
 void checkParam();
 __global__ void initLine(float*, float*, int);
-__global__ void updateAll(float*, float*, float*, int);
+__global__ void updateAll(float*, float*, float*, int, int);
 void printResult();
 
 int totalSteps, totalPoints, allocPoints;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 	initLine<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, totalPoints);
 
 	printf("Updating all points for all time steps...\n");
-	updateAll<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, devNextVal, totalPoints);
+	updateAll<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, devNextVal, totalPoints, totalSteps);
 
 	printf("Printing final results...\n");
 	HANDLE_ERROR(cudaMemcpy(currVal, devCurrVal, allocPoints * sizeof(float), cudaMemcpyDeviceToHost));
@@ -95,10 +95,11 @@ __global__ void initLine(float *__devPrevVal, float *__devCurrVal, int __totalPo
 	}
 }
 
-__global__ void updateAll(float *__devPrevVal, float *__devCurrVal, float *__devNextVal, int __totalPoints) {
+__global__ void updateAll(float *__devPrevVal, float *__devCurrVal, float *__devNextVal,
+                          int __totalPoints, int __totalSteps) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < __totalPoints) {
-		for (int i = 0; i < totalSteps; i++) {
+		for (int i = 0; i < __totalSteps; i++) {
 			if ((i == 0) || (i == __totalPoints - 1))
 				__devNextVal[i] = 0.0;
 			else
