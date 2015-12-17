@@ -100,8 +100,8 @@ void checkParam() {
 }
 
 __global__ void initLine(float *__devPrevVal, float *__devCurrVal, int __totalPoints) {
-	/*int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if (i < __totalPoints) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	/*if (i < __totalPoints) {
 		float x = i / (__totalPoints - 1);
 		__devPrevVal[i] = __devCurrVal[i] = __sinf(2.0 * PI * x);
 	}*/
