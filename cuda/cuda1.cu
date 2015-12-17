@@ -11,7 +11,6 @@
 #define MAXPOINTS 1000000
 #define MAXSTEPS  1000000
 #define MINPOINTS 20
-#define PI        3.14159265
 
 static void handleError(cudaError_t err, const char *file, int line) {
 	if (err != cudaSuccess) {
@@ -102,8 +101,8 @@ void checkParam() {
 __global__ void initLine(float *__devPrevVal, float *__devCurrVal, int __totalPoints) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < __totalPoints) {
-		float x = i / (__totalPoints - 1);
-		__devPrevVal[i] = __devCurrVal[i] = __sinf(2.0 * PI * x);
+		float x = (float) i / (__totalPoints - 1);
+		__devPrevVal[i] = __devCurrVal[i] = __sinf(6.28318530 * x);
 	}
 }
 
