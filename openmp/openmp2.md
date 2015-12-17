@@ -1,4 +1,4 @@
-# Test Results for `openmp1.c` #
+# Test Results for openmp1.c #
 
 On the workstations of NCTU CSCC, using up to 4 threads.
 
