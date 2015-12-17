@@ -5,9 +5,9 @@ On the CUDA server of NCTU CS SSLAB, using NVIDIA TESLA K20.
 ```bash
 -bash-4.1$ time ./cuda1 1000000 1000000 > out
 
-real    0m59.791s
-user    0m43.274s
-sys     0m8.370s
+real    0m12.127s
+user    0m9.928s
+sys     0m2.136s
 ```
 
 ## Program Output ##
