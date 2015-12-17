@@ -53,6 +53,9 @@ int main(int argc, char *argv[]) {
 
 	initLine<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, totalPoints);
 
+	HANDLE_ERROR(cudaMemcpy(currVal, devCurrVal, allocPoints * sizeof(float), cudaMemcpyDeviceToHost));
+	printResult();
+
 	printf("%ld\n", clock());
 	printf("Updating all points for all time steps...\n");
 
