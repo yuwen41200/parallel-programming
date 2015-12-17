@@ -22,7 +22,7 @@ static void handleError(cudaError_t err, const char *file, int line) {
 #define HANDLE_ERROR(err) (handleError(err, __FILE__, __LINE__))
 
 void checkParam();
-__global__ void initLine();
+__global__ void initLine(float*, float*, int);
 __global__ void updateAll(float*, float*, float*, int);
 void printResult();
 
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 	printf("%ld\n", clock());
 	printf("Initializing points on the line...\n");
 
-	initLine<<<numOfBlocks, threadsPerBlock>>>();
+	initLine<<<numOfBlocks, threadsPerBlock>>>(devPrevVal, devCurrVal, totalPoints);
 
 	HANDLE_ERROR(cudaMemcpy(currVal, devCurrVal, allocPoints * sizeof(float), cudaMemcpyDeviceToHost));
 	printResult();
@@ -99,25 +99,25 @@ void checkParam() {
 	printf("Using points = %d, steps = %d\n", totalPoints, totalSteps);
 }
 
-__global__ void initLine() {
+__global__ void initLine(float *__devPrevVal, float *__devCurrVal, int __totalPoints) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if (i < totalPoints) {
-		float x = i / (totalPoints - 1);
-		devPrevVal[i] = devCurrVal[i] = __sinf(2.0 * PI * x);
+	if (i < __totalPoints) {
+		float x = i / (__totalPoints - 1);
+		__devPrevVal[i] = __devCurrVal[i] = __sinf(2.0 * PI * x);
 	}
 }
 
-__global__ void updateAll(float *devPrevVal, float *devCurrVal, float *devNextVal, int totalPoints) {
+__global__ void updateAll(float *__devPrevVal, float *__devCurrVal, float *__devNextVal, int __totalPoints) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if (i < totalPoints) {
-		if ((i == 0) || (i == totalPoints - 1))
-			devNextVal[i] = 0.0;
+	if (i < __totalPoints) {
+		if ((i == 0) || (i == __totalPoints - 1))
+			__devNextVal[i] = 0.0;
 		else
-			devNextVal[i] = 2.0 * devCurrVal[i] - devPrevVal[i] + 0.09 * (-2.0) * devCurrVal[i];
+			__devNextVal[i] = 2.0 * __devCurrVal[i] - __devPrevVal[i] + 0.09 * (-2.0) * __devCurrVal[i];
 		__syncthreads();
-		devPrevVal[i] = devCurrVal[i];
+		__devPrevVal[i] = __devCurrVal[i];
 		__syncthreads();
-		devCurrVal[i] = devNextVal[i];
+		__devCurrVal[i] = __devNextVal[i];
 	}
 }
 
