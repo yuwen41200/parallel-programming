@@ -49,6 +49,7 @@ int main() {
 	cl_command_queue cmd_queue    = NULL ;
 	cl_mem           rst_mem      = NULL ;
 	cl_mem           img_mem      = NULL ;
+	cl_mem           sz_mem       = NULL ;
 	cl_program       program      = NULL ;
 	cl_kernel        kernel       = NULL ;
 	cl_int           value        = 0    ;
@@ -59,14 +60,16 @@ int main() {
 	cmd_queue = clCreateCommandQueue(context, device_id, 0, &value);
 	rst_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, 768 * sizeof(unsigned int), NULL, &value);
 	img_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, size * sizeof(unsigned int), NULL, &value);
+	sz_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &value);
 	value = clEnqueueWriteBuffer(cmd_queue, rst_mem, CL_TRUE, 0, 768 * sizeof(unsigned int), result, 0, NULL, NULL);
 	value = clEnqueueWriteBuffer(cmd_queue, img_mem, CL_TRUE, 0, size * sizeof(unsigned int), image, 0, NULL, NULL);
+	value = clEnqueueWriteBuffer(cmd_queue, sz_mem, CL_TRUE, 0, sizeof(unsigned int), size, 0, NULL, NULL);
 	program = clCreateProgramWithSource(context, 1, &code_char, &code_len, &value);
 	value = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 	kernel = clCreateKernel(program, "histogram", &value);
 	value = clSetKernelArg(kernel, 0, sizeof(cl_mem), &rst_mem);
 	value = clSetKernelArg(kernel, 1, sizeof(cl_mem), &img_mem);
-	value = clSetKernelArg(kernel, 2, sizeof(cl_uint), &size);
+	value = clSetKernelArg(kernel, 2, sizeof(cl_mem), &sz_mem);
 	value = clEnqueueTask(cmd_queue, kernel, 0, NULL, NULL);
 	value = clEnqueueReadBuffer(cmd_queue, rst_mem, CL_TRUE, 0, 768 * sizeof(unsigned int), result, 0, NULL, NULL);
 	value = clFlush(cmd_queue);
@@ -75,6 +78,7 @@ int main() {
 	value = clReleaseProgram(program);
 	value = clReleaseMemObject(rst_mem);
 	value = clReleaseMemObject(img_mem);
+	value = clReleaseMemObject(sz_mem);
 	value = clReleaseCommandQueue(cmd_queue);
 	value = clReleaseContext(context);
 
