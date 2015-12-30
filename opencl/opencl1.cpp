@@ -63,6 +63,7 @@ int main() {
 	sz_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int), &size, &ret);
 	program = clCreateProgramWithSource(context, 1, &code_char, &code_len, &ret);
 	ret = clBuildProgram(program, 1, &device_id, 0, 0, 0);
+	if (ret != CL_SUCCESS) { std::cerr << "Build Failed !!" << std::endl; exit(1); }
 	kernel = clCreateKernel(program, "histogram", &ret);
 	ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &rst_mem);
 	ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &img_mem);
