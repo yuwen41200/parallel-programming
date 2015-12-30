@@ -30,7 +30,7 @@ int main() {
 
 	std::stringstream ss;
 	std::string code_str;
-	char *code_char;
+	const char *code_char;
 	size_t code_len;
 	ss << source.rdbuf();
 	code_str = ss.str();
@@ -42,16 +42,16 @@ int main() {
 //----------------------------------------------------------------------------//
 
 	cl_platform_id   platform_id  = NULL ;
-	cl_uint          platform_num = 0       ;
+	cl_uint          platform_num = 0    ;
 	cl_device_id     device_id    = NULL ;
-	cl_uint          devices_num  = 0       ;
+	cl_uint          devices_num  = 0    ;
 	cl_context       context      = NULL ;
 	cl_command_queue cmd_queue    = NULL ;
 	cl_mem           rst_mem      = NULL ;
 	cl_mem           img_mem      = NULL ;
 	cl_program       program      = NULL ;
 	cl_kernel        kernel       = NULL ;
-	cl_int           value        = 0       ;
+	cl_int           value        = 0    ;
 
 	value = clGetPlatformIDs(1, &platform_id, &platform_num);
 	value = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &devices_num);
