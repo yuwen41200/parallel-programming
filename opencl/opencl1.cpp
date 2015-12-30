@@ -26,8 +26,6 @@ int main() {
 	result = new unsigned int[768];
 	while (input >> temp)
 		image[index++] = temp;
-	for (index = 0; index < 768; ++index)
-		result[index] = 0;
 
 	std::stringstream ss;
 	std::string code_str;
@@ -55,23 +53,24 @@ int main() {
 	cl_kernel        kernel       = 0;
 	cl_int           ret          = 0;
 	cl_build_status  status       = 0;
-	char *log_char;
-	size_t log_len;
+	char             *log_char    = 0;
+	size_t           log_len      = 0;
+	size_t           work_size    = 3;
 
 	ret = clGetPlatformIDs(1, &platform_id, &platform_num);
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &devices_num);
 	context = clCreateContext(0, 1, &device_id, 0, 0, &ret);
 	cmd_queue = clCreateCommandQueue(context, device_id, 0, &ret);
-	rst_mem = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 768 * sizeof(unsigned int), result, &ret);
+	rst_mem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 768 * sizeof(unsigned int), 0, &ret);
 	img_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, size * sizeof(unsigned int), image, &ret);
 	sz_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int), &size, &ret);
 	program = clCreateProgramWithSource(context, 1, &code_char, &code_len, &ret);
 	ret = clBuildProgram(program, 1, &device_id, "-Werror", 0, 0);
 	if (ret != CL_SUCCESS) {
-		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
-		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_len);
+		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, 0);
+		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, 0, &log_len);
 		log_char = new char[log_len + 1];
-		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_len + 1, log_char, NULL);
+		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_len + 1, log_char, 0);
 		std::cerr << "Build Failed !!" << std::endl;
 		std::cerr << "error = " << ret << ", status = " << status << ", message: " << std::endl << log_char;
 		delete log_char;
@@ -80,7 +79,7 @@ int main() {
 	ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &rst_mem);
 	ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &img_mem);
 	ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), &sz_mem);
-	ret = clEnqueueTask(cmd_queue, kernel, 0, 0, 0);
+	ret = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, 0, &work_size, 0, 0, 0, 0);
 	ret = clEnqueueReadBuffer(cmd_queue, rst_mem, CL_TRUE, 0, 768 * sizeof(unsigned int), result, 0, 0, 0);
 	ret = clFlush(cmd_queue);
 	ret = clFinish(cmd_queue);
