@@ -4,6 +4,7 @@
  * This program was originally written in serial method by the teacher.
  */
 
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -15,7 +16,7 @@
 #endif
 
 int main() {
-	std::fstream source("opencl2.cpp", std::ios_base::in);
+	std::fstream source("opencl2.cl", std::ios_base::in);
 	std::fstream input("opencl3.in", std::ios_base::in);
 	std::fstream output("opencl4.out", std::ios_base::out);
 
@@ -53,6 +54,9 @@ int main() {
 	cl_program       program      = 0;
 	cl_kernel        kernel       = 0;
 	cl_int           ret          = 0;
+	cl_build_status  status       = 0;
+	char *log_char;
+	size_t log_len;
 
 	ret = clGetPlatformIDs(1, &platform_id, &platform_num);
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &devices_num);
@@ -62,8 +66,16 @@ int main() {
 	img_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, size * sizeof(unsigned int), image, &ret);
 	sz_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int), &size, &ret);
 	program = clCreateProgramWithSource(context, 1, &code_char, &code_len, &ret);
-	ret = clBuildProgram(program, 1, &device_id, 0, 0, 0);
-	if (ret != CL_SUCCESS) { std::cerr << "Build Failed !!" << std::endl; exit(1); }
+	ret = clBuildProgram(program, 1, &device_id, "-Werror", 0, 0);
+	if (ret != CL_SUCCESS) {
+		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
+		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_len);
+		log_char = new char[log_len + 1];
+		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_len + 1, log_char, NULL);
+		std::cerr << "Build Failed !!" << std::endl;
+		std::cerr << "error = " << ret << ", status = " << status << ", message: " << std::endl << log_char;
+		delete log_char;
+	}
 	kernel = clCreateKernel(program, "histogram", &ret);
 	ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &rst_mem);
 	ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &img_mem);
