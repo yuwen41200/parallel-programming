@@ -64,6 +64,8 @@ int main() {
 	rst_mem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 768 * sizeof(unsigned int), 0, &ret);
 	img_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, size * sizeof(unsigned int), image, &ret);
 	sz_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int), &size, &ret);
+	ret = clEnqueueWriteBuffer(cmd_queue, img_mem, CL_TRUE, 0, size * sizeof(unsigned int), image, 0, 0, 0);
+	ret = clEnqueueWriteBuffer(cmd_queue, sz_mem, CL_TRUE, 0, sizeof(unsigned int), &size, 0, 0, 0);
 	program = clCreateProgramWithSource(context, 1, &code_char, &code_len, &ret);
 	ret = clBuildProgram(program, 1, &device_id, "-Werror", 0, 0);
 	if (ret != CL_SUCCESS) {
