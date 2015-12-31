@@ -60,13 +60,21 @@ int main() {
 	size_t           work_size    = 1;
 
 	ret = clGetPlatformIDs(1, &platform_id, &platform_num);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &devices_num);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	context = clCreateContext(0, 1, &device_id, 0, 0, &ret);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	cmd_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	rst_mem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 768 * sizeof(unsigned int), 0, &ret);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	img_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, size * sizeof(unsigned int), image, &ret);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	sz_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int), &size, &ret);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	program = clCreateProgramWithSource(context, 1, &code_char, &code_len, &ret);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clBuildProgram(program, 1, &device_id, "-Werror", 0, 0);
 	if (ret != CL_SUCCESS) {
 		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, 0);
@@ -77,6 +85,7 @@ int main() {
 		delete log_char;
 	}
 	kernel = clCreateKernel(program, "histogram", &ret);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &rst_mem);
 	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &img_mem);
@@ -86,15 +95,25 @@ int main() {
 	ret = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, 0, &work_size, 0, 0, 0, 0);
 	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clEnqueueReadBuffer(cmd_queue, rst_mem, CL_TRUE, 0, 768 * sizeof(unsigned int), result, 0, 0, 0);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clFlush(cmd_queue);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clFinish(cmd_queue);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clReleaseKernel(kernel);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clReleaseProgram(program);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clReleaseMemObject(rst_mem);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clReleaseMemObject(img_mem);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clReleaseMemObject(sz_mem);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clReleaseCommandQueue(cmd_queue);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 	ret = clReleaseContext(context);
+	if (ret != CL_SUCCESS) std::cerr << clGetErrorString(ret) << std::endl;
 
 //----------------------------------------------------------------------------//
 //                          End of these ugly codes.                          //
