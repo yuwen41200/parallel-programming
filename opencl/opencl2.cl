@@ -14,6 +14,4 @@ __kernel void histogram(__global unsigned int *rst, __constant unsigned int *img
 	rst += 256;
 	for (idx = 2; idx < sz; idx += 3)
 		rst[img[idx]]++;
-
-	rst -= 512;
 }

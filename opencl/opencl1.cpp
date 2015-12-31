@@ -71,8 +71,7 @@ int main() {
 		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, 0, &log_len);
 		log_char = new char[log_len + 1];
 		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_len + 1, log_char, 0);
-		std::cerr << "Build Failed !!" << std::endl;
-		std::cerr << "error = " << ret << ", status = " << status << ", message: " << std::endl << log_char;
+		std::cerr << "Build Failed !!" << std::endl << "error = " << ret << ", status = " << status << ", message: " << std::endl << log_char;
 		delete log_char;
 	}
 	kernel = clCreateKernel(program, "histogram", &ret);
@@ -80,6 +79,8 @@ int main() {
 	ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &img_mem);
 	ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), &sz_mem);
 	ret = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, 0, &work_size, 0, 0, 0, 0);
+	if (ret != CL_SUCCESS)
+		std::cerr << "Execution Failed !!" << std::endl << "error = " << ret << std::endl;
 	ret = clEnqueueReadBuffer(cmd_queue, rst_mem, CL_TRUE, 0, 768 * sizeof(unsigned int), result, 0, 0, 0);
 	ret = clFlush(cmd_queue);
 	ret = clFinish(cmd_queue);
