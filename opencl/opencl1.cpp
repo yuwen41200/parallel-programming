@@ -55,15 +55,15 @@ int main() {
 	cl_build_status  status       = 0;
 	char             *log_char    = 0;
 	size_t           log_len      = 0;
-	size_t           work_size    = 3;
+	size_t           work_size    = 1;
 
 	ret = clGetPlatformIDs(1, &platform_id, &platform_num);
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &devices_num);
 	context = clCreateContext(0, 1, &device_id, 0, 0, &ret);
 	cmd_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 	rst_mem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 768 * sizeof(unsigned int), 0, &ret);
-	img_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, size * sizeof(unsigned int), image, &ret);
-	sz_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int), &size, &ret);
+	img_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, size * sizeof(unsigned int), image, &ret);
+	sz_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned int), &size, &ret);
 	ret = clEnqueueWriteBuffer(cmd_queue, img_mem, CL_TRUE, 0, size * sizeof(unsigned int), image, 0, 0, 0);
 	ret = clEnqueueWriteBuffer(cmd_queue, sz_mem, CL_TRUE, 0, sizeof(unsigned int), &size, 0, 0, 0);
 	program = clCreateProgramWithSource(context, 1, &code_char, &code_len, &ret);
